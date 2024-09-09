@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runner Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        canvas {
+            background-color: #f0f0f0;
+            border: 2px solid #000;
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .coupon {
+            display: none;
+            margin-top: 20px;
+        }
+        .coupon p {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #couponCode {
+            font-size: 22px;
+            font-family: monospace;
+            background-color: #f0f0f0;
+            border: 2px solid #000;
+            padding: 10px;
+            display: inline-block;
+        }
+        #jumpButton {
+            display: none; /* Initially hidden */
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Press Space to Jump! (Mobile: Press Jump Button)</h1>
+<button id="startButton">Start Game</button>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+
+<div class="coupon" id="couponDiv">
+    <p>Congratulations! You earned a coupon:</p>
+    <p id="couponText">Coupon: <span id="couponCode"></span></p>
+    <button onclick="copyCoupon()">Copy Coupon</button>
+    <button onclick="retryGame()">Retry</button>
+</div>
+
+<button id="jumpButton" onclick="jump()">Jump</button>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startButton = document.getElementById('startButton');
+    const couponDiv = document.getElementById('couponDiv');
+    const couponCodeElement = document.getElementById('couponCode');
+    const jumpButton = document.getElementById('jumpButton');
+    const couponText = document.getElementById('couponText');
+
+    let runner = {
+        x: 50,
+        y: 350,
+        width: 40,
+        height: 40,
+        dy: 0,
+        gravity: 0.8,
+        jumpPower: -15,
+        grounded: true
+    };
+
+    let obstacles = [];
+    let obstacleSpeed = 6;
+    let obstacleInterval = 2000;  // milliseconds
+    let score = 0;
+    let gameStarted = false;
+    let gameOver = false;
+
+    // Adjust to screen size (for mobile view)
+    function adjustCanvasSize() {
+        canvas.width = window.innerWidth * 0.8;
+        canvas.height = 400;
+    }
+    window.addEventListener('resize', adjustCanvasSize);
+    adjustCanvasSize();
+
+    // Generate new obstacles
+    function createObstacle() {
+        obstacles.push({
+            x: canvas.width,
+            y: 360,
+            width: 20 + Math.random() * 30,  // Random obstacle width
+            height: 40,
+            speed: obstacleSpeed
+        });
+
+        // Increase difficulty over time
+        obstacleSpeed += 0.2;
+        obstacleInterval -= 50;
+        if (obstacleInterval < 1000) obstacleInterval = 1000;  // Cap interval at 1 second
+
+        // Create the next obstacle
+        setTimeout(createObstacle, obstacleInterval);
+    }
+
+    // Draw Runner
+    function drawRunner() {
+        ctx.fillStyle = '#007bff';
+        ctx.fillRect(runner.x, runner.y, runner.width, runner.height);
+    }
+
+    // Draw Obstacles
+    function drawObstacles() {
+        ctx.fillStyle = '#ff6347';
+        obstacles.forEach(obstacle => {
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        });
+    }
+
+    // Handle Runner Jump
+    function jump() {
+        if (runner.grounded) {
+            runner.dy = runner.jumpPower;
+            runner.grounded = false;
+        }
+    }
+
+    // Handle Input (desktop)
+    document.addEventListener('keydown', function (e) {
+        if (e.code === 'Space' && gameStarted && !gameOver) {
+            jump();
+        }
+    });
+
+    // Game Loop
+    function gameLoop() {
+        if (gameOver) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update Runner
+        runner.dy += runner.gravity;
+        runner.y += runner.dy;
+
+        if (runner.y + runner.height >= 400) {
+            runner.y = 360; // Ground level
+            runner.dy = 0;
+            runner.grounded = true;
+        }
+
+        // Update Obstacles
+        obstacles.forEach((obstacle, index) => {
+            obstacle.x -= obstacle.speed;
+
+            // Remove obstacles that have moved off screen
+            if (obstacle.x + obstacle.width < 0) {
+                obstacles.splice(index, 1);
+                score++;  // Increment score when passing an obstacle
+            }
+
+            // Check for collisions
+            if (
+                runner.x < obstacle.x + obstacle.width &&
+                runner.x + runner.width > obstacle.x &&
+                runner.y + runner.height > obstacle.y
+            ) {
+                gameOver = true;
+                displayCoupon(score);
+            }
+        });
+
+        // Draw everything
+        drawRunner();
+        drawObstacles();
+
+        // Display Score
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#000';
+        ctx.fillText(`Score: ${score}`, 20, 30);
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Display Coupon Based on Score
+    function displayCoupon(score) {
+        let coupon;
+        if (score < 20) {
+            coupon = "10% OFF";
+        } else if (score >= 20 && score < 50) {
+            coupon = "20% OFF";
+        } else {
+            coupon = "25% OFF";
+        }
+
+        couponCodeElement.textContent = coupon;
+        couponDiv.style.display = 'block';
+        couponText.style.display = 'block';
+        canvas.style.display = 'none';  // Hide the canvas after the game ends
+        jumpButton.style.display = 'none';  // Hide the jump button after the game ends
+    }
+
+    // Copy Coupon Code
+    function copyCoupon() {
+        const couponCode = couponCodeElement.textContent;
+        navigator.clipboard.writeText(couponCode).then(() => {
+            alert('Coupon copied to clipboard: ' + couponCode);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    }
+
+    // Retry Game
+    function retryGame() {
+        document.location.reload();
+    }
+
+    // Start Game on button click
+    startButton.addEventListener('click', function() {
+        gameStarted = true;
+        startButton.style.display = 'none';  // Hide start button
+        createObstacle();
+        gameLoop();
+
+        // Show the jump button for mobile users
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            jumpButton.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
