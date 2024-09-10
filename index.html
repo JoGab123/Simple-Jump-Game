@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runner Game</title>
-    <style>
-        body {
+<meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> Runner Game
+<style><!--
+body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
@@ -54,24 +49,14 @@
             display: none; /* Initially hidden */
             margin-top: 20px;
         }
-    </style>
-</head>
-<body>
-
+--></style>
 <h1>Press Space to Jump! (Mobile: Press Jump Button)</h1>
-<button id="startButton">Start Game</button>
-<canvas id="gameCanvas" width="800" height="400"></canvas>
-
+<button id="startButton">Start Game</button> <canvas id="gameCanvas" width="800" height="400"></canvas>
 <div class="coupon" id="couponDiv">
-    <p>Congratulations! You earned a coupon:</p>
-    <p id="couponText">Coupon: <span id="couponCode"></span></p>
-    <button onclick="copyCoupon()">Copy Coupon</button>
-    <button onclick="retryGame()">Retry</button>
-</div>
-
-<button id="jumpButton" onclick="jump()">Jump</button>
-
-<script>
+<p>Congratulations! You earned a coupon:</p>
+<p id="couponText">Coupon: <span id="couponCode"></span></p>
+<button onclick="copyCoupon()">Copy Coupon</button> <button onclick="retryGame()">Retry</button></div>
+<button id="jumpButton" onclick="jump()">Jump</button> <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const startButton = document.getElementById('startButton');
@@ -149,10 +134,12 @@
 
     // Handle Input (desktop)
     document.addEventListener('keydown', function (e) {
-        if (e.code === 'Space' && gameStarted && !gameOver) {
-            jump();
-        }
-    });
+    if (e.code === 'Space' && gameStarted && !gameOver) {
+        e.preventDefault(); // Prevent page scrolling
+        jump();
+    }
+});
+
 
     // Game Loop
     function gameLoop() {
@@ -249,6 +236,3 @@
         }
     });
 </script>
-
-</body>
-</html>
